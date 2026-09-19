@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getDefaultMode, getClaudeDir, isShellSafe } = require('./ponytail-config');
-const { getPonytailInstructions } = require('./ponytail-instructions');
+const { getFallbackInstructions, getPonytailInstructions } = require('./ponytail-instructions');
 const {
   clearMode,
   cursorRuleNotice,
@@ -58,7 +58,7 @@ try {
 }
 
 // 2. Emit the ponytail ruleset, filtered to the active intensity level.
-let output = getPonytailInstructions(mode);
+let output = isCursor ? getPonytailInstructions(mode) : getFallbackInstructions(mode);
 
 // 3. Detect missing statusline config — nudge Claude to help set it up
 if (!isCodex && !isCopilot && !isCursor) try {

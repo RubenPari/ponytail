@@ -137,6 +137,11 @@ assert.equal(
   fs.readFileSync(path.join(home, '.claude', '.ponytail-active'), 'utf8'),
   'full',
 );
+assert.match(result.stdout, /PONYTAIL MODE ACTIVE — level: full/);
+assert.ok(
+  !result.stdout.includes('## Intensity'),
+  'SessionStart should use condensed instructions instead of the full skill body (#685)',
+);
 
 // CLAUDE_CONFIG_DIR overrides ~/.claude for the flag file (issue #34).
 const home2 = path.join(temp, 'home2');
