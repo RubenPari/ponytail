@@ -6,8 +6,9 @@
 // instruction builder so Claude Code, Codex, pi, and OpenCode all read one
 // source of truth.
 //
-// OpenCode loads this as a server plugin — add it to your opencode.json:
-//   { "plugin": ["@dietrichgebert/ponytail"] }
+// Supports both OpenCode V1 (function export) and V2 (Plugin.define object shape).
+// OpenCode V2: add to opencode.json: { "plugins": ["@dietrichgebert/ponytail"] }
+// OpenCode V1: add to opencode.json: { "plugin": ["@dietrichgebert/ponytail"] }
 
 import { createRequire } from 'module';
 import fs from 'fs';
@@ -43,7 +44,8 @@ function writeMode(mode) {
   fs.writeFileSync(statePath, mode);
 }
 
-export default async ({ client } = {}) => {
+// Shared hook implementations used by both V1 and V2.
+function createHooks(client) {
   const log = (level, message) => {
     try { client && client.app && client.app.log({ body: { service: 'ponytail', level, message } }); } catch (e) {}
   };
@@ -96,4 +98,21 @@ export default async ({ client } = {}) => {
       log('info', 'ponytail ' + mode);
     },
   };
+}
+
+// OpenCode V2 plugin definition (default export).
+// V2 expects: { id, setup(context) } or { id, effect(context) }
+export default {
+  id: 'ponytail',
+  async setup(context) {
+    // V2 context may have client, or may BE the client object itself
+    const client = context?.client || context;
+    return createHooks(client);
+  },
+};
+
+// OpenCode V1 fallback (named export for legacy loaders that may find this).
+// Kept for compatibility with any V1 systems that might check for it.
+export const pluginV1 = async ({ client } = {}) => {
+  return createHooks(client);
 };
