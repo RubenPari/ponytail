@@ -47,6 +47,11 @@ function transform(hooks) {
   return hooks['experimental.chat.system.transform']({ model: {} }, output).then(() => output.system);
 }
 
+async function configure(hooks, config) {
+  await hooks.config(config);
+  return config;
+}
+
 // Test suite runner: runs the same tests for both V1 and V2 APIs.
 function createTestSuite(apiName, loadHooks) {
   test(`[${apiName}] system.transform injects the ruleset at the default mode (full)`, async () => {
@@ -82,6 +87,32 @@ function createTestSuite(apiName, loadHooks) {
     assert.equal(output.system.length, 1, 'must not add a second system entry');
     assert.match(output.system[0], /You are a helpful assistant/);
     assert.match(output.system[0], /PONYTAIL MODE ACTIVE/);
+  });
+
+  test(`[${apiName}] config injects the active ruleset into subagent prompts`, async () => {
+    fs.writeFileSync(statePath, 'lite');
+    const hooks = await loadHooks({});
+    const config = await configure(hooks, {
+      agent: {
+        explore: { mode: 'subagent', prompt: 'Explore only.' },
+        build: { mode: 'primary', prompt: 'Build the change.' },
+        helper: { mode: 'all' },
+      },
+    });
+
+    assert.match(config.agent.explore.prompt, /Explore only\./);
+    assert.match(config.agent.explore.prompt, /PONYTAIL MODE ACTIVE — level: lite/);
+    assert.equal(config.agent.build.prompt, 'Build the change.');
+    assert.match(config.agent.helper.prompt, /PONYTAIL MODE ACTIVE — level: lite/);
+  });
+
+  test(`[${apiName}] config leaves subagent prompts unchanged when Ponytail is off`, async () => {
+    fs.writeFileSync(statePath, 'off');
+    const hooks = await loadHooks({});
+    const config = await configure(hooks, {
+      agent: { explore: { mode: 'subagent', prompt: 'Explore only.' } },
+    });
+    assert.equal(config.agent.explore.prompt, 'Explore only.');
   });
 
   test(`[${apiName}] unsupported /ponytail arguments do not reset the current mode`, async () => {

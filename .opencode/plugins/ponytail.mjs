@@ -44,6 +44,21 @@ function writeMode(mode) {
   fs.writeFileSync(statePath, mode);
 }
 
+function injectSubagentPrompts(config) {
+  if (!config || !config.agent) return;
+
+  const mode = readMode();
+  if (mode === 'off') return;
+  const instructions = getPonytailInstructions(mode);
+
+  for (const agent of Object.values(config.agent)) {
+    if (!agent || agent.mode === 'primary') continue;
+    agent.prompt = agent.prompt
+      ? agent.prompt + '\n\n' + instructions
+      : instructions;
+  }
+}
+
 // Shared hook implementations used by both V1 and V2.
 function createHooks(client) {
   const log = (level, message) => {
@@ -55,6 +70,7 @@ function createHooks(client) {
   return {
     // Register slash commands + skills directory.
     config: async (config) => {
+      injectSubagentPrompts(config);
       if (!config.command) config.command = {};
       const commandDir = path.join(__dirname, '..', 'command');
       try {

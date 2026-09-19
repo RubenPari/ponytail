@@ -191,7 +191,7 @@ Run from a checkout instead (the plugin reuses `hooks/` and `skills/`):
 { "plugin": ["./.opencode/plugins/ponytail.mjs"] }
 ```
 
-Injects the ruleset every turn at the active level; adds the `/ponytail` commands (see [Commands](#commands)). OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
+Injects the ruleset every turn at the active level, propagates it into non-primary agent prompts, and adds the `/ponytail` commands (see [Commands](#commands)). OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
 
 The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the `.mjs` instead (it finds its `hooks/` and `skills/` relative to its own file).
 
